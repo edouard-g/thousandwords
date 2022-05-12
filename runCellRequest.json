@@ -1,0 +1,5 @@
+{
+  "lines": ["import pandas as pd; pd.Series([1, 2, 3]).plot()"],
+  "userNS": [],
+  "version": "3.7"
+}
