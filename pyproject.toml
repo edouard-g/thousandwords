@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "thousandwords"
-version = "0.7.0"
+version = "0.10.0"
 description = "Share your code, data and visuals, directly from Jupyter"
 authors = ["Edouard Godfrey <edouard@1000words-hq.com>"]
 license = "Proprietary"

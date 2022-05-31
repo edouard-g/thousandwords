@@ -31,7 +31,7 @@ class Client:
       is_mock = (endpoint == 'http://192.168.1.30:20002/graphql')
       auth = AWS4Auth(
         # see https://docs.amplify.aws/cli/usage/mock/
-        'ASIAVJKIAM-AuthRole' if is_mock else creds['AccessKeyId'],
+        'ASIAVJKIAM-UnAuthRole' if is_mock else creds['AccessKeyId'],
         creds['SecretKey'],
         CONFIG.api_region,
         'appsync',
@@ -63,6 +63,44 @@ class Client:
       raise Exception(ret["errors"][0]["message"])
 
     return ret["data"]["createCell"]["id"]
+  
+  def create_invite(self, input):
+    query = """
+      mutation CreateInvite(
+        $input: CreateInviteInput!
+      ) {
+        createInvite(input: $input) {
+          id
+        }
+      }
+    """
+    if CognitoAuth().is_authd():
+      auth_type = 'AMAZON_COGNITO_USER_POOLS'
+    else:
+      # fallback to guest (public iam)
+      auth_type = 'AWS_IAM'
+    ret = self._get_gql_client(auth_type).execute(
+      query=query, variables={"input": input}
+    )
+    if "errors" in ret:
+      raise Exception(ret["errors"][0]["message"])
+
+    return ret["data"]["createInvite"]["id"]
+  
+  def get_callback(self, id):
+    query = """
+      query GetCallback($id: ID!) {
+        getCallback(id: $id) {
+          id
+        }
+      }
+    """
+    ret = self._get_gql_client('AWS_IAM').execute(
+      query=query, variables={"id": id}
+    )
+    if "errors" in ret:
+      raise Exception(ret["errors"][0]["message"])
+    return (ret["data"]["getCallback"] or {}).get("id")
   
   def run_cell(self, req):
     query = """
@@ -104,14 +142,12 @@ class Client:
     return self._s3
   
   def upload(self, key, value):
-    key = f'uploads/{key}'
     resp = self.s3.put_object(
       Key=key,
       Bucket=CONFIG.storage_bucket,
       Body=value,
     )
     logger.debug(f"s3 put_object response: {resp}")
-    return key
   
   def get(self, key):
     resp = self.s3.get_object(

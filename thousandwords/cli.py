@@ -43,7 +43,8 @@ def cells_run(args):
 
 def storage_upload(args):
   with open(args.file) as f:
-    key = Client().upload(args.key, f.read())
+    key = f'uploads/{args.key}'
+    Client().upload(key, f.read())
   print(f"Successfully created object with key: {key}")
 
 def storage_get(args):
